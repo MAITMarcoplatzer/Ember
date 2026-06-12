@@ -1,13 +1,18 @@
 # Ember-Installer fuer Endanwender
 #
-#   irm https://git.mait.de/AI.Network/Ember/raw/branch/main/install.ps1 | iex
+#   MAIT-intern: irm https://git.mait.de/AI.Network/Ember/raw/branch/main/install.ps1 | iex
+#   Extern:      irm https://raw.githubusercontent.com/MAITMarcoplatzer/Ember/main/install.ps1 | iex
 #
-# Laedt die aktuelle Ember.exe aus dem neuesten Gitea-Release, legt sie unter
-# %LOCALAPPDATA%\Ember ab, erstellt eine Startmenue-Verknuepfung, aktiviert den
-# Autostart und startet die App. Installiert codeburn automatisch, falls es fehlt.
+# Laedt die aktuelle Ember.exe aus dem neuesten Release (MAIT-Gitea, Fallback
+# GitHub), legt sie unter %LOCALAPPDATA%\Ember ab, erstellt eine Startmenue-
+# Verknuepfung, aktiviert den Autostart und startet die App. Installiert
+# codeburn automatisch, falls es fehlt.
 
 $ErrorActionPreference = 'Stop'
-$api = 'https://git.mait.de/api/v1/repos/AI.Network/Ember'
+$releaseApis = @(
+    'https://git.mait.de/api/v1/repos/AI.Network/Ember/releases/latest',
+    'https://api.github.com/repos/MAITMarcoplatzer/Ember/releases/latest'
+)
 $installDir = Join-Path $env:LOCALAPPDATA 'Ember'
 $exePath = Join-Path $installDir 'Ember.exe'
 
@@ -24,8 +29,18 @@ if (-not (Get-Command codeburn -ErrorAction SilentlyContinue)) {
     }
 }
 
-# 2. Neueste Ember.exe aus dem letzten Release laden
-$release = Invoke-RestMethod "$api/releases/latest"
+# 2. Neueste Ember.exe aus dem letzten Release laden (erste erreichbare Quelle)
+$release = $null
+foreach ($apiUrl in $releaseApis) {
+    try {
+        $release = Invoke-RestMethod $apiUrl -TimeoutSec 15
+        Write-Host "Release-Quelle: $apiUrl"
+        break
+    } catch {
+        Write-Host "Quelle nicht erreichbar, versuche naechste... ($apiUrl)"
+    }
+}
+if (-not $release) { Write-Error "Keine Release-Quelle erreichbar (Gitea/GitHub)." }
 $asset = $release.assets | Where-Object name -eq 'Ember.exe' | Select-Object -First 1
 if (-not $asset) { Write-Error "Im neuesten Release wurde keine Ember.exe gefunden." }
 

@@ -7,7 +7,13 @@ Top-Modellen und Top-Projekten.
 
 ## Installation (Anwender)
 
-Eine Zeile in PowerShell:
+Eine Zeile in PowerShell — von GitHub:
+
+```powershell
+irm https://raw.githubusercontent.com/MAITMarcoplatzer/Ember/main/install.ps1 | iex
+```
+
+oder MAIT-intern:
 
 ```powershell
 irm https://git.mait.de/AI.Network/Ember/raw/branch/main/install.ps1 | iex
@@ -69,7 +75,11 @@ winget install Microsoft.DotNet.SDK.8
 ```
 
 Release veröffentlichen: Tag erstellen, `build.ps1` ausführen, `dist\Ember.exe` als
-Asset an das Gitea-Release hängen — `install.ps1` zieht immer das neueste Release.
+Asset an das Release hängen (Gitea und/oder GitHub) — `install.ps1` probiert beide
+Quellen in dieser Reihenfolge: MAIT-Gitea, dann GitHub.
+
+Das Projekt wird parallel gepflegt auf [git.mait.de/AI.Network/Ember](https://git.mait.de/AI.Network/Ember)
+(MAIT-intern) und [github.com/MAITMarcoplatzer/Ember](https://github.com/MAITMarcoplatzer/Ember) (öffentlich).
 
 ## Roadmap
 
