@@ -15,6 +15,7 @@ public partial class App : Application
     private WinForms.NotifyIcon _tray = null!;
     private FlyoutWindow _flyout = null!;
     private DispatcherTimer _timer = null!;
+    private readonly HourlyTracker _hourly = new();
     private Snapshot? _today;
     private Snapshot? _month;
     private DateTime _dailyFetchedUtc;
@@ -128,6 +129,8 @@ public partial class App : Application
             _month = monthTask.Result;
 
             UpdateTray();
+            _hourly.Sample(_today.Cost, _today.Currency, DateTime.Now);
+            _flyout.SetHourly(_hourly.Hours, _today.Currency);
             _flyout.SetData(_today, _month,
                 "Stand " + DateTime.Now.ToString("HH:mm", CultureInfo.GetCultureInfo("de-DE")));
 

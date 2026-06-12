@@ -22,6 +22,7 @@ public partial class FlyoutWindow : Window
     private Snapshot? _today;
     private Snapshot? _month;
     private IReadOnlyList<DailyCost>? _daily;
+    private IReadOnlyList<double>? _hourly;
     private string _dailyCurrency = "EUR";
     private bool _showMonth;
     private bool _initializingSettings;
@@ -62,7 +63,20 @@ public partial class FlyoutWindow : Window
         RenderSparkline();
     }
 
+    public void SetHourly(IReadOnlyList<double> hourly, string currency)
+    {
+        _hourly = hourly;
+        _dailyCurrency = currency;
+        RenderSparkline();
+    }
+
     private void RenderSparkline()
+    {
+        if (_showMonth) RenderDailyBars();
+        else RenderHourlyBars();
+    }
+
+    private void RenderDailyBars()
     {
         SparkGrid.Children.Clear();
         SparkGrid.ColumnDefinitions.Clear();
@@ -75,33 +89,61 @@ public partial class FlyoutWindow : Window
 
         var de = CultureInfo.GetCultureInfo("de-DE");
         var max = Math.Max(_daily.Max(d => d.Cost), 0.0001);
-        var accent = Hex("#D85A30");
-        var bar = Hex("#F0997B");
 
         for (var i = 0; i < _daily.Count; i++)
         {
-            SparkGrid.ColumnDefinitions.Add(
-                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
             var day = _daily[i];
-            var isToday = i == _daily.Count - 1;
-            var rect = new Border
-            {
-                Background = isToday ? accent : bar,
-                Opacity = isToday ? 1.0 : 0.55,
-                CornerRadius = new CornerRadius(2),
-                Margin = new Thickness(1.5, 0, 1.5, 0),
-                VerticalAlignment = VerticalAlignment.Bottom,
-                Height = Math.Max(2, day.Cost / max * SparkGrid.Height),
-                ToolTip = $"{day.Date:dd.MM.}: {MoneyFormat.Full(day.Cost, _dailyCurrency)}",
-            };
-            Grid.SetColumn(rect, i);
-            SparkGrid.Children.Add(rect);
+            AddBar(i, day.Cost / max, highlight: i == _daily.Count - 1,
+                $"{day.Date:dd.MM.}: {MoneyFormat.Full(day.Cost, _dailyCurrency)}");
         }
 
         SparkFromLabel.Text = _daily[0].Date.ToString("d. MMM", de);
+        SparkToLabel.Text = "heute";
         SparkLabels.Visibility = Visibility.Visible;
         if (IsVisible) Reposition();
+    }
+
+    private void RenderHourlyBars()
+    {
+        SparkGrid.Children.Clear();
+        SparkGrid.ColumnDefinitions.Clear();
+
+        if (_hourly is null || _hourly.Count == 0)
+        {
+            SparkLabels.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var max = Math.Max(_hourly.Max(), 0.0001);
+        var currentHour = DateTime.Now.Hour;
+
+        for (var hour = 0; hour < _hourly.Count; hour++)
+            AddBar(hour, _hourly[hour] / max, highlight: hour == currentHour,
+                $"{hour}–{hour + 1} Uhr: {MoneyFormat.Full(_hourly[hour], _dailyCurrency)}");
+
+        SparkFromLabel.Text = "0 Uhr";
+        SparkToLabel.Text = "24 Uhr";
+        SparkLabels.Visibility = Visibility.Visible;
+        if (IsVisible) Reposition();
+    }
+
+    private void AddBar(int column, double fraction, bool highlight, string tooltip)
+    {
+        SparkGrid.ColumnDefinitions.Add(
+            new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        var rect = new Border
+        {
+            Background = Hex(highlight ? "#D85A30" : "#F0997B"),
+            Opacity = highlight ? 1.0 : 0.55,
+            CornerRadius = new CornerRadius(2),
+            Margin = new Thickness(1, 0, 1, 0),
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Height = Math.Max(2, Math.Min(1, fraction) * SparkGrid.Height),
+            ToolTip = tooltip,
+        };
+        Grid.SetColumn(rect, column);
+        SparkGrid.Children.Add(rect);
     }
 
     public void ShowFlyout()
@@ -231,12 +273,14 @@ public partial class FlyoutWindow : Window
     {
         _showMonth = false;
         Render();
+        RenderSparkline();
     }
 
     private void OnTabMonthClick(object sender, RoutedEventArgs e)
     {
         _showMonth = true;
         Render();
+        RenderSparkline();
     }
 
     private void OnRefreshClick(object sender, RoutedEventArgs e) =>
