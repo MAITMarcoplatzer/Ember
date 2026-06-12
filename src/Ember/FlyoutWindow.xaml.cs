@@ -21,6 +21,8 @@ public partial class FlyoutWindow : Window
 
     private Snapshot? _today;
     private Snapshot? _month;
+    private IReadOnlyList<DailyCost>? _daily;
+    private string _dailyCurrency = "EUR";
     private bool _showMonth;
     private bool _initializingSettings;
     private OptimizeReport? _optimizeCache;
@@ -51,6 +53,55 @@ public partial class FlyoutWindow : Window
         _month = month;
         StatusText.Text = status;
         Render();
+    }
+
+    public void SetSparkline(IReadOnlyList<DailyCost> daily, string currency)
+    {
+        _daily = daily;
+        _dailyCurrency = currency;
+        RenderSparkline();
+    }
+
+    private void RenderSparkline()
+    {
+        SparkGrid.Children.Clear();
+        SparkGrid.ColumnDefinitions.Clear();
+
+        if (_daily is null || _daily.Count == 0)
+        {
+            SparkLabels.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var de = CultureInfo.GetCultureInfo("de-DE");
+        var max = Math.Max(_daily.Max(d => d.Cost), 0.0001);
+        var accent = Hex("#D85A30");
+        var bar = Hex("#F0997B");
+
+        for (var i = 0; i < _daily.Count; i++)
+        {
+            SparkGrid.ColumnDefinitions.Add(
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var day = _daily[i];
+            var isToday = i == _daily.Count - 1;
+            var rect = new Border
+            {
+                Background = isToday ? accent : bar,
+                Opacity = isToday ? 1.0 : 0.55,
+                CornerRadius = new CornerRadius(2),
+                Margin = new Thickness(1.5, 0, 1.5, 0),
+                VerticalAlignment = VerticalAlignment.Bottom,
+                Height = Math.Max(2, day.Cost / max * SparkGrid.Height),
+                ToolTip = $"{day.Date:dd.MM.}: {MoneyFormat.Full(day.Cost, _dailyCurrency)}",
+            };
+            Grid.SetColumn(rect, i);
+            SparkGrid.Children.Add(rect);
+        }
+
+        SparkFromLabel.Text = _daily[0].Date.ToString("d. MMM", de);
+        SparkLabels.Visibility = Visibility.Visible;
+        if (IsVisible) Reposition();
     }
 
     public void ShowFlyout()
@@ -453,6 +504,7 @@ public partial class FlyoutWindow : Window
         {
             await CodeburnClient.RunRawAsync($"currency {code}");
             SettingsStatusText.Text = $"Währung: {code} – Daten werden neu geladen.";
+            SettingsChanged?.Invoke();
             RefreshRequested?.Invoke();
         }
         catch (Exception ex)

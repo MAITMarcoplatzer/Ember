@@ -17,6 +17,7 @@ public partial class App : Application
     private DispatcherTimer _timer = null!;
     private Snapshot? _today;
     private Snapshot? _month;
+    private DateTime _dailyFetchedUtc;
     private bool _fetching;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -99,6 +100,7 @@ public partial class App : Application
     private void OnSettingsChanged()
     {
         _timer.Interval = TimeSpan.FromSeconds(Settings.RefreshSeconds);
+        _dailyFetchedUtc = default; // Sparkline beim nächsten Refresh neu laden
         UpdateTray();
     }
 
@@ -128,6 +130,14 @@ public partial class App : Application
             UpdateTray();
             _flyout.SetData(_today, _month,
                 "Stand " + DateTime.Now.ToString("HH:mm", CultureInfo.GetCultureInfo("de-DE")));
+
+            // Sparkline-Daten sind teurer (eigener Export-Lauf) -> nur alle 5 Minuten
+            if (DateTime.UtcNow - _dailyFetchedUtc > TimeSpan.FromMinutes(5))
+            {
+                var daily = await CodeburnClient.FetchDailyAsync(14);
+                _dailyFetchedUtc = DateTime.UtcNow;
+                _flyout.SetSparkline(daily, _today.Currency);
+            }
         }
         catch (Exception ex)
         {

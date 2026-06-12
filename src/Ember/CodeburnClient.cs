@@ -6,6 +6,8 @@ namespace Ember;
 
 public sealed record UsageItem(string Name, double Cost, int Calls);
 
+public sealed record DailyCost(DateOnly Date, double Cost);
+
 public sealed record Snapshot(
     double Cost,
     int Calls,
@@ -37,6 +39,55 @@ public static class CodeburnClient
             Currency: currency,
             Models: ReadItems(root, "models", useLeafOfPath: false),
             Projects: ReadItems(root, "projects", useLeafOfPath: true));
+    }
+
+    public static async Task<IReadOnlyList<DailyCost>> FetchDailyAsync(int days, CancellationToken ct = default)
+    {
+        var to = DateTime.Now.Date;
+        var from = to.AddDays(-(days - 1));
+        var tmp = Path.Combine(Path.GetTempPath(), $"ember-spark-{Environment.ProcessId}.json");
+        try
+        {
+            await RunAsync(
+                $"codeburn export --format json --from {from:yyyy-MM-dd} --to {to:yyyy-MM-dd} -o \"{tmp}\"", ct);
+
+            using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(tmp, ct));
+            var byDate = new Dictionary<DateOnly, double>();
+
+            if (doc.RootElement.TryGetProperty("periods", out var periods))
+                foreach (var period in periods.EnumerateArray())
+                {
+                    if (!period.TryGetProperty("daily", out var daily)) continue;
+                    foreach (var row in daily.EnumerateArray())
+                    {
+                        DateOnly? date = null;
+                        double cost = 0;
+                        foreach (var prop in row.EnumerateObject())
+                        {
+                            if (prop.Name == "Date" && System.DateOnly.TryParseExact(
+                                    prop.Value.GetString(), "yyyy-MM-dd", out var d))
+                                date = d;
+                            else if (prop.Name.StartsWith("Cost (")
+                                     && prop.Value.ValueKind == JsonValueKind.Number)
+                                cost = prop.Value.GetDouble();
+                        }
+                        if (date is { } day)
+                            byDate[day] = byDate.GetValueOrDefault(day) + cost;
+                    }
+                }
+
+            var list = new List<DailyCost>(days);
+            for (var i = 0; i < days; i++)
+            {
+                var day = DateOnly.FromDateTime(from.AddDays(i));
+                list.Add(new DailyCost(day, byDate.GetValueOrDefault(day)));
+            }
+            return list;
+        }
+        finally
+        {
+            try { File.Delete(tmp); } catch { /* temp file */ }
+        }
     }
 
     private static IReadOnlyList<UsageItem> ReadItems(JsonElement root, string key, bool useLeafOfPath)
