@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.Win32;
 
 namespace Ember;
@@ -17,8 +18,19 @@ public static class Autostart
     {
         using var key = Registry.CurrentUser.CreateSubKey(RunKey);
         if (enabled)
-            key.SetValue(ValueName, $"\"{Environment.ProcessPath}\"");
+            key.SetValue(ValueName, LaunchCommand());
         else
             key.DeleteValue(ValueName, throwOnMissingValue: false);
+    }
+
+    private static string LaunchCommand()
+    {
+        var host = Environment.ProcessPath ?? "Ember.exe";
+        if (!Path.GetFileName(host).Equals("dotnet.exe", StringComparison.OrdinalIgnoreCase))
+            return $"\"{host}\"";
+
+        // Lauf über den .NET-Host (z. B. wegen ASR-Richtlinie): dotnet + dll registrieren
+        var dll = System.Reflection.Assembly.GetEntryAssembly()?.Location;
+        return dll is { Length: > 0 } ? $"\"{host}\" \"{dll}\"" : $"\"{host}\"";
     }
 }

@@ -43,6 +43,19 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="IconText" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="SettingLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
     </Window.Resources>
 
     <Border x:Name="RootBorder"
@@ -65,61 +78,187 @@
                     <TextBlock Text="CodeBurn für Windows" FontSize="11" Margin="8,0,0,0"
                                Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
                 </StackPanel>
-                <Button x:Name="BtnRefresh" Style="{StaticResource FlatButton}"
-                        HorizontalAlignment="Right" Padding="6" ToolTip="Aktualisieren"
-                        Click="OnRefreshClick">
-                    <TextBlock Text="&#xE72C;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                               FontSize="13" Foreground="{DynamicResource MutedBrush}" />
-                </Button>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="BtnRefresh" Style="{StaticResource FlatButton}"
+                            Padding="6" ToolTip="Aktualisieren" Click="OnRefreshClick">
+                        <TextBlock Text="&#xE72C;" Style="{StaticResource IconText}" />
+                    </Button>
+                    <Button x:Name="BtnSettings" Style="{StaticResource FlatButton}"
+                            Padding="6" ToolTip="Einstellungen" Click="OnSettingsClick">
+                        <TextBlock Text="&#xE713;" Style="{StaticResource IconText}" />
+                    </Button>
+                </StackPanel>
             </Grid>
 
-            <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="7" Padding="3"
-                    Margin="0,0,0,14">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Button x:Name="TabToday" Grid.Column="0" Style="{StaticResource FlatButton}"
-                            Content="Heute" Click="OnTabTodayClick" />
-                    <Button x:Name="TabMonth" Grid.Column="1" Style="{StaticResource FlatButton}"
-                            Content="Monat" Click="OnTabMonthClick" />
-                </Grid>
-            </Border>
+            <StackPanel x:Name="MainPanel">
+                <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="7" Padding="3"
+                        Margin="0,0,0,14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="TabToday" Grid.Column="0" Style="{StaticResource FlatButton}"
+                                Content="Heute" Click="OnTabTodayClick" />
+                        <Button x:Name="TabMonth" Grid.Column="1" Style="{StaticResource FlatButton}"
+                                Content="Monat" Click="OnTabMonthClick" />
+                    </Grid>
+                </Border>
 
-            <TextBlock x:Name="BigText" Text="–" FontSize="30" FontWeight="SemiBold"
-                       Foreground="{DynamicResource TextBrush}" Margin="0,0,0,2" />
-            <TextBlock x:Name="SubText" Text="Lade Daten…" FontSize="12"
-                       Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,14" />
+                <TextBlock x:Name="BigText" Text="–" FontSize="30" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextBrush}" Margin="0,0,0,2" />
+                <TextBlock x:Name="SubText" Text="Lade Daten…" FontSize="12"
+                           Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,14" />
 
-            <TextBlock Text="Top-Modelle" FontSize="12" FontWeight="SemiBold"
-                       Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,7" />
-            <StackPanel x:Name="ModelsPanel" Margin="0,0,0,12" />
+                <TextBlock Text="Top-Modelle" FontSize="12" FontWeight="SemiBold"
+                           Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,7" />
+                <StackPanel x:Name="ModelsPanel" Margin="0,0,0,12" />
 
-            <TextBlock Text="Top-Projekte" FontSize="12" FontWeight="SemiBold"
-                       Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,7" />
-            <StackPanel x:Name="ProjectsPanel" Margin="0,0,0,12" />
+                <TextBlock Text="Top-Projekte" FontSize="12" FontWeight="SemiBold"
+                           Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,7" />
+                <StackPanel x:Name="ProjectsPanel" Margin="0,0,0,12" />
 
-            <Border BorderBrush="{DynamicResource EdgeBrush}" BorderThickness="0,1,0,0"
-                    Padding="0,10,0,0">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Style="{StaticResource FlatButton}"
-                            HorizontalAlignment="Left" Click="OnDashboardClick">
+                <Border BorderBrush="{DynamicResource EdgeBrush}" BorderThickness="0,1,0,0"
+                        Padding="0,10,0,0">
+                    <Grid>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE9D9;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                       FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"
-                                       Foreground="{DynamicResource MutedBrush}" />
-                            <TextBlock Text="Dashboard öffnen" Foreground="{DynamicResource TextBrush}" />
+                            <Button Style="{StaticResource FlatButton}" Click="OnDashboardClick"
+                                    ToolTip="CodeBurn-TUI im Terminal öffnen">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE9D9;" Style="{StaticResource IconText}"
+                                               FontSize="12" Margin="0,0,6,0" />
+                                    <TextBlock Text="Dashboard" Foreground="{DynamicResource TextBrush}" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource FlatButton}" Click="OnExportClick"
+                                    ToolTip="Aktuellen Zeitraum als CSV/JSON exportieren">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE896;" Style="{StaticResource IconText}"
+                                               FontSize="12" Margin="0,0,6,0" />
+                                    <TextBlock Text="Export" Foreground="{DynamicResource TextBrush}" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource FlatButton}" Click="OnOptimizeClick"
+                                    ToolTip="Token-Verschwendung analysieren">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE945;" Style="{StaticResource IconText}"
+                                               FontSize="12" Margin="0,0,6,0" />
+                                    <TextBlock Text="Optimize" Foreground="{DynamicResource TextBrush}" />
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
-                    </Button>
-                    <TextBlock x:Name="StatusText" Grid.Column="1" FontSize="11"
+                        <TextBlock x:Name="StatusText" HorizontalAlignment="Right" FontSize="11"
+                                   Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <StackPanel x:Name="OptimizePanel" Visibility="Collapsed">
+                <Grid Margin="0,0,0,12">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Style="{StaticResource FlatButton}" Padding="6"
+                                Click="OnBackClick" ToolTip="Zurück">
+                            <TextBlock Text="&#xE72B;" Style="{StaticResource IconText}" />
+                        </Button>
+                        <TextBlock Text="Optimize" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center"
+                                   Margin="4,0,0,0" />
+                    </StackPanel>
+                    <TextBlock Text="letzte 30 Tage" FontSize="11" HorizontalAlignment="Right"
                                Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
                 </Grid>
-            </Border>
+
+                <TextBlock x:Name="OptStatusText" Text="Analysiere Sessions…" FontSize="12"
+                           Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,12" />
+
+                <Grid x:Name="OptScoreRow" Visibility="Collapsed" Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border x:Name="OptHealthCard" Grid.Column="0" CornerRadius="7" Padding="10,8">
+                        <StackPanel>
+                            <TextBlock x:Name="OptHealthLabel" Text="Config Health" FontSize="11" />
+                            <TextBlock x:Name="OptHealthValue" Text="–" FontSize="20" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                    <Border x:Name="OptSaveCard" Grid.Column="2" CornerRadius="7" Padding="10,8">
+                        <StackPanel>
+                            <TextBlock x:Name="OptSaveLabel" Text="Sparpotenzial" FontSize="11" />
+                            <TextBlock x:Name="OptSaveValue" Text="–" FontSize="20" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <StackPanel x:Name="OptFindingsPanel" />
+
+                <Border BorderBrush="{DynamicResource EdgeBrush}" BorderThickness="0,1,0,0"
+                        Padding="0,10,0,0" Margin="0,2,0,0">
+                    <Grid>
+                        <TextBlock x:Name="OptMoreText" FontSize="11" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource MutedBrush}" />
+                        <Button Style="{StaticResource FlatButton}" HorizontalAlignment="Right"
+                                Click="OnOptimizeTerminalClick">
+                            <TextBlock Text="Alle im Terminal anzeigen"
+                                       Foreground="{DynamicResource TextBrush}" FontSize="11" />
+                        </Button>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <StackPanel x:Name="SettingsPanel" Visibility="Collapsed">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                    <Button Style="{StaticResource FlatButton}" Padding="6"
+                            Click="OnBackClick" ToolTip="Zurück">
+                        <TextBlock Text="&#xE72B;" Style="{StaticResource IconText}" />
+                    </Button>
+                    <TextBlock Text="Einstellungen" FontSize="13" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center"
+                               Margin="4,0,0,0" />
+                </StackPanel>
+
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Währung" Style="{StaticResource SettingLabel}" />
+                    <ComboBox x:Name="CmbCurrency" Grid.Column="1" FontSize="12"
+                              SelectionChanged="OnCurrencyChanged" />
+                </Grid>
+
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Aktualisierung" Style="{StaticResource SettingLabel}" />
+                    <ComboBox x:Name="CmbInterval" Grid.Column="1" FontSize="12"
+                              SelectionChanged="OnIntervalChanged" />
+                </Grid>
+
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Tray-Icon" Style="{StaticResource SettingLabel}" />
+                    <ComboBox x:Name="CmbIconStyle" Grid.Column="1" FontSize="12"
+                              SelectionChanged="OnIconStyleChanged" />
+                </Grid>
+
+                <CheckBox x:Name="ChkAutostart" Content="Mit Windows starten" FontSize="12"
+                          Foreground="{DynamicResource TextBrush}" Margin="0,4,0,12"
+                          Checked="OnAutostartChanged" Unchecked="OnAutostartChanged" />
+
+                <Border BorderBrush="{DynamicResource EdgeBrush}" BorderThickness="0,1,0,0"
+                        Padding="0,8,0,0">
+                    <TextBlock x:Name="SettingsStatusText" FontSize="11"
+                               Foreground="{DynamicResource MutedBrush}" />
+                </Border>
+            </StackPanel>
+
         </StackPanel>
     </Border>
 </Window>

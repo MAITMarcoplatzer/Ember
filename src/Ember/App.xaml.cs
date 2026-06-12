@@ -8,6 +8,8 @@ namespace Ember;
 
 public partial class App : Application
 {
+    public static AppSettings Settings { get; } = AppSettings.Load();
+
     private static Mutex? _singleInstance;
 
     private WinForms.NotifyIcon _tray = null!;
@@ -21,6 +23,13 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        if (e.Args.Contains("--selftest-optimize"))
+        {
+            RunOptimizeSelftest();
+            Shutdown();
+            return;
+        }
+
         _singleInstance = new Mutex(initiallyOwned: true, "EmberTrayApp", out var isNew);
         if (!isNew)
         {
@@ -30,6 +39,7 @@ public partial class App : Application
 
         _flyout = new FlyoutWindow();
         _flyout.RefreshRequested += () => _ = RefreshAsync();
+        _flyout.SettingsChanged += OnSettingsChanged;
 
         var menu = new WinForms.ContextMenuStrip();
         menu.Items.Add("Aktualisieren", null, (_, _) => _ = RefreshAsync());
@@ -54,11 +64,42 @@ public partial class App : Application
         };
         _tray.MouseUp += OnTrayMouseUp;
 
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+        _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(Settings.RefreshSeconds) };
         _timer.Tick += (_, _) => _ = RefreshAsync();
         _timer.Start();
 
         _ = RefreshAsync();
+    }
+
+    private static void RunOptimizeSelftest()
+    {
+        var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ember-selftest.txt");
+        try
+        {
+            // Task.Run vermeidet den Deadlock zwischen blockierendem UI-Thread
+            // und Async-Fortsetzungen, die auf den Dispatcher zurückwollen
+            var raw = Task.Run(() => CodeburnClient.RunRawAsync("optimize --period 30days"))
+                .GetAwaiter().GetResult();
+            var report = OptimizeReport.Parse(raw);
+            var lines = new List<string>
+            {
+                $"Grade={report.Grade} Score={report.Score} Issues={report.Issues} TotalSavings={report.TotalSavings}",
+                $"Findings={report.Findings.Count}",
+            };
+            lines.AddRange(report.Findings.Select(f =>
+                $"  #{f.Rank} [{f.Severity}] {f.Title} | Savings={f.Savings} | Body={f.Body.Length} Zeichen | Action={(f.ActionText is null ? "-" : f.ActionText.Length + " Zeichen")}"));
+            System.IO.File.WriteAllLines(path, lines);
+        }
+        catch (Exception ex)
+        {
+            System.IO.File.WriteAllText(path, "FEHLER: " + ex);
+        }
+    }
+
+    private void OnSettingsChanged()
+    {
+        _timer.Interval = TimeSpan.FromSeconds(Settings.RefreshSeconds);
+        UpdateTray();
     }
 
     private void OnTrayMouseUp(object? sender, WinForms.MouseEventArgs e)
@@ -104,7 +145,7 @@ public partial class App : Application
         if (_today is null) return;
 
         var oldIcon = _tray.Icon;
-        _tray.Icon = TrayIconFactory.CreateCostIcon(_today.Cost, _today.Currency);
+        _tray.Icon = TrayIconFactory.CreateCostIcon(_today.Cost, _today.Currency, Settings.IconStyle);
         oldIcon?.Dispose();
 
         var tooltip = $"Ember · Heute {MoneyFormat.Full(_today.Cost, _today.Currency)}";

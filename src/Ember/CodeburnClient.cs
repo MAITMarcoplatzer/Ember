@@ -17,6 +17,9 @@ public sealed record Snapshot(
 
 public static class CodeburnClient
 {
+    public static Task<string> RunRawAsync(string arguments, CancellationToken ct = default) =>
+        RunAsync("codeburn " + arguments, ct);
+
     public static async Task<Snapshot> FetchAsync(string period, CancellationToken ct = default)
     {
         var json = await RunAsync($"codeburn {period} --format json", ct);
