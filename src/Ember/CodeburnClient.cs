@@ -14,6 +14,9 @@ public sealed record Snapshot(
     int Sessions,
     double CacheHitPercent,
     string Currency,
+    long InputTokens,
+    long CacheReadTokens,
+    long OutputTokens,
     IReadOnlyList<UsageItem> Models,
     IReadOnlyList<UsageItem> Projects);
 
@@ -31,15 +34,30 @@ public static class CodeburnClient
         var overview = root.GetProperty("overview");
         var currency = root.TryGetProperty("currency", out var c) ? c.GetString() ?? "USD" : "USD";
 
+        long input = 0, cacheRead = 0, output = 0;
+        if (overview.TryGetProperty("tokens", out var tok))
+        {
+            input = ReadLong(tok, "input");
+            cacheRead = ReadLong(tok, "cacheRead");
+            output = ReadLong(tok, "output");
+        }
+
         return new Snapshot(
             Cost: overview.GetProperty("cost").GetDouble(),
             Calls: overview.GetProperty("calls").GetInt32(),
             Sessions: overview.TryGetProperty("sessions", out var s) ? s.GetInt32() : 0,
             CacheHitPercent: overview.TryGetProperty("cacheHitPercent", out var ch) ? ch.GetDouble() : 0,
             Currency: currency,
+            InputTokens: input,
+            CacheReadTokens: cacheRead,
+            OutputTokens: output,
             Models: ReadItems(root, "models", useLeafOfPath: false),
             Projects: ReadItems(root, "projects", useLeafOfPath: true));
     }
+
+    private static long ReadLong(JsonElement parent, string name) =>
+        parent.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number
+            ? v.GetInt64() : 0;
 
     public static async Task<IReadOnlyList<DailyCost>> FetchDailyAsync(int days, CancellationToken ct = default)
     {

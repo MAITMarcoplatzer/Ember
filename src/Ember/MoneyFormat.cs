@@ -21,4 +21,13 @@ public static class MoneyFormat
         var symbol = currency switch { "EUR" => "€", "USD" => "$", "GBP" => "£", _ => "" };
         return rounded < 100 ? rounded.ToString(De) + symbol : rounded.ToString(De);
     }
+
+    /// <summary>Kompakte Token-Zahl: 980, 12,3K, 4,5M, 1,2Mrd.</summary>
+    public static string Tokens(long value) => value switch
+    {
+        >= 1_000_000_000 => (value / 1_000_000_000d).ToString("0.#", De) + "Mrd",
+        >= 1_000_000 => (value / 1_000_000d).ToString("0.#", De) + "M",
+        >= 1_000 => (value / 1_000d).ToString("0.#", De) + "K",
+        _ => value.ToString(De),
+    };
 }

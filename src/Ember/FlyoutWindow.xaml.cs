@@ -193,6 +193,7 @@ public partial class FlyoutWindow : Window
         {
             BigText.Text = "–";
             SubText.Text = "Noch keine Daten geladen.";
+            TokenText.Text = "";
             ModelsPanel.Children.Clear();
             ProjectsPanel.Children.Clear();
             return;
@@ -202,6 +203,10 @@ public partial class FlyoutWindow : Window
         SubText.Text = string.Format(CultureInfo.GetCultureInfo("de-DE"),
             "{0:N0} Calls · {1} Sessions · Cache-Hit {2:N1} %",
             snap.Calls, snap.Sessions, snap.CacheHitPercent);
+        TokenText.Text =
+            $"{MoneyFormat.Tokens(snap.InputTokens)} Input · " +
+            $"{MoneyFormat.Tokens(snap.CacheReadTokens)} Cache · " +
+            $"{MoneyFormat.Tokens(snap.OutputTokens)} Output";
 
         RenderItems(ModelsPanel, snap.Models, snap);
         RenderItems(ProjectsPanel, snap.Projects, snap);

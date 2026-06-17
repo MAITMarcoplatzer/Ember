@@ -10,7 +10,7 @@
     <RootNamespace>Ember</RootNamespace>
     <AssemblyName>Ember</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.4.0</Version>
+    <Version>0.5.0</Version>
     <Product>Ember</Product>
     <Description>CodeBurn für Windows – AI-Kosten im System-Tray</Description>
     <Company>MAIT GmbH</Company>
